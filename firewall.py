@@ -11,7 +11,6 @@ r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 s_receive = create_receive_socket()
 send_icmp = create_icmp_send_socket()
-#dest_ip = ip_daddr
 
 try:
     while True:
@@ -24,15 +23,12 @@ try:
                 continue
             
             rule = r.hgetall(key)
-         #       print(rule)
             action = rule.get('action','').upper()
             s_ip = rule.get('source_ip','')
             d_ip = rule.get('destination_ip','')
 
-            #if action == "ALLOW":
-         #       while True:
                 
-                    # Read a packet
+            # Read a packet
             raw_packet = s_receive.recvfrom(65565)[0]
             ip_header = IP(raw_packet[14:34])
             print("Protocol: %s %s -> %s" % (ip_header.protocol, ip_header.src_address, ip_header.dst_address))

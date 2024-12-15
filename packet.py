@@ -29,8 +29,3 @@ ip_daddr = socket.inet_aton ( dest_ip )
 
 ip_ihl_ver = (ip_ver << 4) + ip_ihl
 
-# packing the ip header
-# the ! in the pack format string means network order
-#ip_header = pack("!BBHHHBBH4s4s" , ip_ihl_ver, ip_tos, ip_tos_len, ip_id, ip_frag_off, ip_ttl, ip_proto, ip_check, ip_saddr, ip_daddr)
-#packet = ip_header
-#sendsock.sendto(packet, (dest_ip , 0))

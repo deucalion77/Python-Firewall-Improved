@@ -2,9 +2,7 @@ import socket
 import threading
 
 def create_receive_socket():
-    """
-    Creates a socket to receive raw packets on the specified interface.
-    """
+    #Creates a socket to receive raw packets on the specified interface.
     s_receive = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0800))
     s_receive.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     return s_receive
@@ -26,18 +24,14 @@ def create_icmp_send_socket():
     return send_icmp
 
 def create_send_udp_socket():
-    """
-    Creates a socket to send raw UDP packets.
-    """
+    #Creates a socket to send raw UDP packets.
     send_udp = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_UDP)
     send_udp.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     send_udp.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
     return send_udp
 
 def handle_protocol(protocol, data):
-    """
-    Handle the specific protocol in a separate thread.
-    """
+    #Handle the specific protocol in a separate thread.
     if protocol == 1:  # ICMP
         send_icmp = create_send_icmp_socket()
         print("ICMP socket created")
@@ -54,9 +48,7 @@ def handle_protocol(protocol, data):
         print(f"Protocol {protocol} not supported")
 
 def main():
-    """
-    Main loop to receive packets and create threads for handling based on protocol.
-    """
+    #Main loop to receive packets and create threads for handling based on protocol.
     s_receive = create_receive_socket()
     
     while True:
