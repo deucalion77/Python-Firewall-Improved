@@ -1,0 +1,20 @@
+def check_firewall_rules():
+    print("Checking firewall rules...")
+
+    keys = r.scan_iter("firewall:query:*")  # Get all keys matching the pattern
+    for key in keys:
+        rule = r.hgetall(key)  # Fetch the rule data
+        action = rule.get('action', '').upper()  # Get action and convert to uppercase for consistency
+        
+        if action == "ALLOW":
+            print(f"Rule {key.split(':')[-1]}: {rule}")
+        elif action == "BLOCK":
+            print(f"Rule {key.split(':')[-1]}: {rule}")
+            print("Encountered BLOCK. Stopping checks.")
+            break  # Stop the loop if a BLOCK action is found
+        else:
+            print(f"Rule {key.split(':')[-1]}: Invalid action '{action}'")
+
+# Call the function to check rules
+check_firewall_rules()
+

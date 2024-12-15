@@ -1,0 +1,74 @@
+#! /usr/bin/python
+
+from sniffer import IP
+from sckt import create_receive_socket, create_icmp_send_socket
+import socket
+import redis
+import threading
+
+# Redis connection
+r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+# Create sockets
+s_receive = create_receive_socket()
+send_icmp = create_icmp_send_socket()
+
+def process_packet(packet):
+    """
+    Process a packet to check if it matches Redis rules and forward it.
+    """
+    ip_header = IP(packet[14:34])  # Extract IP header
+    src_ip = ip_header.src_address
+    dst_ip = ip_header.dst_address
+    protocol = ip_header.protocol
+
+    print(f"Processing Protocol: {protocol}, {src_ip} -> {dst_ip}")
+
+    # Scan Redis for matching rules
+    keys = r.scan_iter("firewall:query*")
+    for key in keys:
+        key_type = r.type(key)
+        if key_type != 'hash':
+            print(f"Skipping key {key} as it is not a hash.")
+            continue
+
+        rule = r.hgetall(key)
+        action = rule.get('action', '').upper()
+        s_ip_rule = rule.get('source_ip', '')
+        d_ip_rule = rule.get('destination_ip', '')
+
+        # Check rules for incoming packet
+        if action == "ALLOW" and s_ip_rule == src_ip and d_ip_rule == dst_ip:
+            print(f"Packet ALLOWED: {src_ip} -> {dst_ip}")
+            send_icmp.sendto(packet[14:], (dst_ip, 0))  # Forward the packet
+            return
+
+        # Check rules for reply packet (reverse flow)
+        if action == "ALLOW" and s_ip_rule == dst_ip and d_ip_rule == src_ip:
+            print(f"Reply Packet ALLOWED: {dst_ip} -> {src_ip}")
+            send_icmp.sendto(packet[14:], (src_ip, 0))  # Forward the reply packet
+            return
+
+    print("Packet BLOCKED")
+
+def sniff_packets():
+    """
+    Sniff packets continuously and spawn threads for processing.
+    """
+    print("Listening for packets...")
+    while True:
+        try:
+            # Read a packet
+            raw_packet = s_receive.recvfrom(65565)[0]
+            # Spawn a thread to handle the packet
+            threading.Thread(target=process_packet, args=(raw_packet,)).start()
+
+        except KeyboardInterrupt:
+            print("Exiting...")
+            break
+        except Exception as e:
+            print(f"Error: {e}")
+
+if __name__ == "__main__":
+    sniff_packets()
+
